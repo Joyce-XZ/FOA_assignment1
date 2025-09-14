@@ -31,8 +31,8 @@ the University and/or inciting others to commit Academic Misconduct). I
 understand that an allegation of Student General Misconduct may arise
 regardless of whether or not I personally make use of such solutions or
 sought benefit from such actions.
-Signed by: [Enter your full name and student number here before submission]
-Dated: [Enter the date that you "signed" the declaration]
+Signed by: Zhuyirui Xu 1750652
+Dated: 15/09/2025
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,6 +40,9 @@ Dated: [Enter the date that you "signed" the declaration]
 #include <strings.h>
 #include <ctype.h>
 #include <assert.h>
+
+#define MAX_M 20
+#define MAX_NAME_LEN 21
 ///////////////////////////////////////////////////////////////////////
 int getword(char W[], int limit);
 // add your other function prototypes here
@@ -48,6 +51,14 @@ int getword(char W[], int limit);
 int
 main(int argc, char *argv[]) {
 // write your main program here
+/*First, read the number of candidates in the first line of input*/
+int m;
+if (scanf("%d",&m)!=1) {
+    /*Invalid input,exit program*/
+    return 0;
+}
+
+
 // all done, time to go home
 printf("tadaa!\n");
 return 0;
