@@ -79,6 +79,12 @@ while (scanf("%d",&last_vote[0])==1) {
     n++;
 }
 
+/*Print Stage 1 Output in required format*/
+printf("Stage 1\n");
+printf("=======\n");
+printf("read %d candidates and %d votes\n", m, n);
+printf("voter %d preferences...\n", n);
+
 
 
 // all done, time to go home
