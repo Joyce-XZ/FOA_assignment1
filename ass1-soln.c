@@ -52,52 +52,51 @@ int
 main(int argc, char *argv[]) {
 // write your main program here
 /*First, read the number of candidates in the first line of input*/
-int m;
-if (scanf("%d",&m) != 1) {
+    int m;
+    if (scanf("%d",&m) != 1) {
     /*Invalid input,exit program*/
-    return 0;
-}
-
-/*Declare a char array to store the names of the candidates*/
-char c_names[MAX_M][MAX_NAME_LEN];
-
-/*Read m candidate names from the second line of input*/
-for (int i = 0; i < m; i++) {
-    getword(c_names[i], MAX_NAME_LEN - 1);
-}
-
-/*Initialise the vote count and create an array to store the last vote preferences*/
-int n = 0;
-int last_vote[MAX_M];
-
-while (scanf("%d", &last_vote[0]) == 1) {
-    /*Read the remaining m-1 preference values for the voter*/
-    for (int j = 1; j < m; j++) {
-        scanf("%d", &last_vote[j]);
+        return 0;
     }
-    /*Increase the vote count after reading one completed vote*/
-    n++;
-}
 
-/*Print Stage 1 Output in required format*/
-printf("Stage 1\n");
-printf("=======\n");
-printf("read %d candidates and %d votes\n", m, n);
-printf("voter %d preferences...\n", n);
+    /*Declare a char array to store the names of the candidates*/
+    char c_names[MAX_M][MAX_NAME_LEN];
 
-/*Map the last voter's preference rankings to candidates'names*/
-for (int rank = 1; rank <= m; rank++){
-    for (int k = 0; k < m; k++){
-        if (last_vote[k] == rank){
-            printf("rank %d: %s\n", rank, c_names[k]);
-            break;
+    /*Read m candidate names from the second line of input*/
+    for (int i = 0; i < m; i++) {
+        getword(c_names[i], MAX_NAME_LEN - 1);
+    }
+
+    /*Initialise the vote count and create an array to store the last vote preferences*/
+    int n = 0;
+    int last_vote[MAX_M];
+
+    while (scanf("%d", &last_vote[0]) == 1) {
+    /*Read the remaining m-1 preference values for the voter*/
+        for (int j = 1; j < m; j++) {
+            scanf("%d", &last_vote[j]);
+        }
+        /*Increase the vote count after reading one completed vote*/
+        n++;
+    }
+
+    /*Print Stage 1 Output in required format*/
+    printf("Stage 1\n");
+    printf("=======\n");
+    printf("read %d candidates and %d votes\n", m, n);
+    printf("voter %d preferences...\n", n);
+
+    /*Map the last voter's preference rankings to candidates'names*/
+    for (int rank = 1; rank <= m; rank++){
+        for (int k = 0; k < m; k++){
+            if (last_vote[k] == rank){
+                printf("rank %d: %s\n", rank, c_names[k]);
+                break;
+            }
         }
     }
-}
-
 // all done, time to go home
-printf("tadaa!\n");
-return 0;
+    printf("tadaa!\n");
+    return 0;
 }
 ///////////////////////////////////////////////////////////////////////
 // extract a single word out of the standard input, of not
