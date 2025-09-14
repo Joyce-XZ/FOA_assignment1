@@ -66,6 +66,19 @@ for (int i = 0; i < m; i++) {
     getword(c_names[i],MAX_NAME_LEN - 1);
 }
 
+/*Initialise the vote count and create an array to store the last vote preferences*/
+int n = 0;
+int last_vote[MAX_M];
+
+while (scanf("%d",&last_vote[0])==1) {
+    /*Read the remaining m-1 preference values for the voter*/
+    for (int j = 1; j < m; j++) {
+        scanf("%d",&last_vote[j]);
+    }
+    /*Increase the vote count after reading one completed vote*/
+    n++;
+}
+
 
 
 // all done, time to go home
