@@ -58,6 +58,15 @@ if (scanf("%d",&m)!=1) {
     return 0;
 }
 
+/*Declare a char array to store the names of the candidates*/
+char c_names[MAX_M][MAX_NAME_LEN];
+
+/*Read m candidate names from the second line of input*/
+for (int i = 0; i < m; i++) {
+    getword(c_names[i],MAX_NAME_LEN - 1);
+}
+
+
 
 // all done, time to go home
 printf("tadaa!\n");
