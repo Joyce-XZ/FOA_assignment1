@@ -89,7 +89,7 @@ main(int argc, char *argv[]) {
     for (int rank = 1; rank <= m; rank++){
         for (int k = 0; k < m; k++){
             if (last_vote[k] == rank){
-                printf("rank %d: %s\n", rank, c_names[k]);
+                printf("    rank %d: %s\n", rank, c_names[k]);
                 break;
             }
         }
@@ -127,3 +127,4 @@ return 0;
 }
 ///////////////////////////////////////////////////////////////////////
 // add your other functions here
+//algorithms are fun!
