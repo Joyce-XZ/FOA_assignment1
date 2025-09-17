@@ -43,6 +43,7 @@ Dated: 15/09/2025
 
 #define MAX_M 20
 #define MAX_NAME_LEN 21
+#define MAX_VOTES 999
 ///////////////////////////////////////////////////////////////////////
 int getword(char W[], int limit);
 // add your other function prototypes here
@@ -66,7 +67,8 @@ main(int argc, char *argv[]) {
         getword(c_names[i], MAX_NAME_LEN - 1);
     }
 
-    /*Initialise the vote count and create an array to store the last vote preferences*/
+    /*Initialise the vote count*/
+    /*Create an array to store the last vote preferences*/
     int n = 0;
     int last_vote[MAX_M];
 
@@ -80,6 +82,7 @@ main(int argc, char *argv[]) {
     }
 
     /*Print Stage 1 Output in required format*/
+    printf("\n");
     printf("Stage 1\n");
     printf("=======\n");
     printf("read %d candidates and %d votes\n", m, n);
@@ -89,7 +92,7 @@ main(int argc, char *argv[]) {
     for (int rank = 1; rank <= m; rank++){
         for (int k = 0; k < m; k++){
             if (last_vote[k] == rank){
-                printf("    rank %d: %s\n", rank, c_names[k]);
+                printf("    rank  %d: %s\n", rank, c_names[k]);
                 break;
             }
         }
