@@ -135,4 +135,23 @@ return 0;
 }
 ///////////////////////////////////////////////////////////////////////
 // add your other functions here
+/*count total votes each candidate currently has*/
+int count_votes(int cand, int votes[][MAX_M], int m, int n, int eliminated[]){
+    int total = 0;
+    /*check each voter*/
+    for (int i = 0; i < n; i++){
+        int best = -1;
+        int bestrank = m + 1;
+        for (int j = 0; j < m; j++){
+            if (!eliminated[j]&&votes[i][j] < bestrank){
+                besteank = votes[i][j];
+                best = j;
+            }
+        }
+        if (best == cand){
+            total++;
+        }
+    }
+    return total; 
+}
 //algorithms are fun!
