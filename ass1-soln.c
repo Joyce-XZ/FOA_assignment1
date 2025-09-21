@@ -154,4 +154,17 @@ int count_votes(int cand, int votes[][MAX_M], int m, int n, int eliminated[]){
     }
     return total; 
 }
+/*find minimum votes to eliminate candidates*/
+int find_eliminate_candidate(int counts[], int eliminate[], int m){
+    int minvotes = 1000000;
+    int elim = -1;
+    for (int i = 0; i < m; i++){
+        if(!eliminated[i]){
+            if (counts[i] < minvotes){
+                minvotes = counts[i];
+                elim = i;
+            }
+        }
+    }
+}   return elim;
 //algorithms are fun!
