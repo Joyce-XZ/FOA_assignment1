@@ -68,14 +68,15 @@ main(int argc, char *argv[]) {
     }
 
     /*Initialise the vote count*/
-    /*Create an array to store the last vote preferences*/
+    int votes[MAX_VOTES][MAX_M];
     int n = 0;
     int last_vote[MAX_M];
 
-    while (scanf("%d", &last_vote[0]) == 1) {
-    /*Read the remaining m-1 preference values for the voter*/
+    /*Read the first rank values of a vote*/
+    while (scanf("%d", &vote[n][0]) == 1) {
+        /*Read rest of the ranks ofr this voter*/
         for (int j = 1; j < m; j++) {
-            scanf("%d", &last_vote[j]);
+            scanf("%d", &vote[n][j]);
         }
         /*Increase the vote count after reading one completed vote*/
         n++;
@@ -91,12 +92,16 @@ main(int argc, char *argv[]) {
     /*Map the last voter's preference rankings to candidates'names*/
     for (int rank = 1; rank <= m; rank++){
         for (int k = 0; k < m; k++){
-            if (last_vote[k] == rank){
+            if (vote[n-1][k] == rank){
                 printf("    rank  %d: %s\n", rank, c_names[k]);
                 break;
             }
         }
     }
+/*Stage 2*/
+stage2(c_names,votes,m,n)
+/*Stage 3*/
+stage3(c_names,votes,m,n)
 // all done, time to go home
     printf("tadaa!\n");
     return 0;
