@@ -54,17 +54,18 @@ void run_stage3(int votes[][MAX_M], char c_names[][MAX_NAME_LEN], int m, int n);
 
 void count_votes(int current_votes[], int eliminated[], int vote_counts[],
     int m, int n);
-void redistribute_votes(int votes[][MAX_M], int current_votes[], int eliminated[],
-    int to_elim, int m, int n);
+void redistribute_votes(int votes[][MAX_M], int current_votes[], 
+    int eliminated[], int to_elim, int m, int n);
 int find_eliminate_candidate(int vote_counts[], int eliminated[], int m);
 int check_winner(int vote_counts[], int eliminated[], int m, int n);
 
-void print_round_results(char c_names[][MAX_NAME_LEN], int vote_counts[], int eliminated[],
-     int m, int n, int round);
-void print_sorted_results(char c_names[][MAX_NAME_LEN], int vote_counts[], int eliminated[],
-     int m, int n, int round);
+void print_round_results(char c_names[][MAX_NAME_LEN], int vote_counts[], 
+    int eliminated[], int m, int n, int round);
+void print_sorted_results(char c_names[][MAX_NAME_LEN], int vote_counts[], 
+    int eliminated[], int m, int n, int round);
 
-void insertion_sort(int sorted[], int vote_counts[], char c_names[][MAX_NAME_LEN], int m);
+void insertion_sort(int sorted[], int vote_counts[], 
+    char c_names[][MAX_NAME_LEN], int m);
 int compare(int a, int b, int vote_counts[], char c_names[][MAX_NAME_LEN]);
 void swap(int arr[], int i, int j);
 ///////////////////////////////////////////////////////////////////////
@@ -329,18 +330,19 @@ check_winner(int vote_counts[], int eliminated[], int m, int n) {
 /*******************************************************************/
 /* print round results in original candidate order */
 void
-print_round_results(char c_names[][MAX_NAME_LEN], int vote_counts[], int eliminated[],
-    int m, int n, int round) {
+print_round_results(char c_names[][MAX_NAME_LEN], int vote_counts[], 
+    int eliminated[], int m, int n, int round) {
     printf("round %d...\n", round);
     for (int i = 0; i < m; i++) {
         if (!eliminated[i]) {
             double percent = (double)vote_counts[i] / n * 100.0;
-            printf("    %-20s:   %d votes,  %.1f%%\n", c_names[i], vote_counts[i], percent);
+            printf("    %-20s:   %d votes, %.1f%%\n", 
+                c_names[i], vote_counts[i], percent);
         }
     }
 }
 
-/*******************************************************************/
+/**************************************************************/
 /* print round results in sorted order, using insertion_sort */
 void
 print_sorted_results(char c_names[][MAX_NAME_LEN], int vote_counts[], int eliminated[],
@@ -357,19 +359,22 @@ print_sorted_results(char c_names[][MAX_NAME_LEN], int vote_counts[], int elimin
         int idx = sorted[i];
         if (!eliminated[idx]) {
             double percent = (double)vote_counts[idx] / n * 100.0;
-            printf("    %-20s:   %d votes,  %.1f%%\n", c_names[idx], vote_counts[idx], percent);
+            printf("    %-20s:   %d votes, %.1f%%\n", 
+                c_names[idx], vote_counts[idx], percent);
         }
     }
 }
 
-/*******************************************************************/
+/************************************************************/
 /* insertion sort of candidate indices,
    comparing via vote totals and then candidate names */
 void
-insertion_sort(int sorted[], int vote_counts[], char c_names[][MAX_NAME_LEN], int m) {
+insertion_sort(int sorted[], int vote_counts[], char c_names[][MAX_NAME_LEN],
+    int m) {
     for (int i = 1; i < m; i++) {
         int j = i;
-        while (j > 0 && compare(sorted[j-1], sorted[j], vote_counts, c_names) > 0) {
+        while (j > 0 && compare(sorted[j-1], sorted[j], vote_counts, 
+            c_names) > 0) {
             swap(sorted, j-1, j);
             j--;
         }
