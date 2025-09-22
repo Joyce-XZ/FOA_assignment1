@@ -176,4 +176,13 @@ void print_round_stage2(int counts[], char c_names[][MAX_NAME_LEN], int m, int n
         }
     }
 }
-//algorithms are fun!
+/*sort stage3 output*/
+void print_round_stage3(int counts[], char c_names[][MAX_NAME_LEN], int m, int n, int elimintaed[]){
+    int order[MAX_M], k = 0;
+    for (int i = 0; i < m; i++){
+        if (!eliminated[i]){
+            order[k++] = i;
+        }
+    }
+    
+    //algorithms are fun!
