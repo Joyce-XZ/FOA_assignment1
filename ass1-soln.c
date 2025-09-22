@@ -336,7 +336,7 @@ print_round_results(char c_names[][MAX_NAME_LEN], int vote_counts[],
     for (int i = 0; i < m; i++) {
         if (!eliminated[i]) {
             double percent = (double)vote_counts[i] / n * 100.0;
-            printf("    %-20s:   %d votes, %.1f%%\n", 
+            printf("    %-20s:  %2d votes, %5.1f%%\n", 
                 c_names[i], vote_counts[i], percent);
         }
     }
@@ -345,8 +345,8 @@ print_round_results(char c_names[][MAX_NAME_LEN], int vote_counts[],
 /**************************************************************/
 /* print round results in sorted order, using insertion_sort */
 void
-print_sorted_results(char c_names[][MAX_NAME_LEN], int vote_counts[], int eliminated[],
-    int m, int n, int round) {
+print_sorted_results(char c_names[][MAX_NAME_LEN], int vote_counts[], 
+    int eliminated[], int m, int n, int round) {
     int sorted[MAX_M];
     for (int i = 0; i < m; i++) {
         sorted[i] = i;
@@ -359,7 +359,7 @@ print_sorted_results(char c_names[][MAX_NAME_LEN], int vote_counts[], int elimin
         int idx = sorted[i];
         if (!eliminated[idx]) {
             double percent = (double)vote_counts[idx] / n * 100.0;
-            printf("    %-20s:   %d votes, %.1f%%\n", 
+            printf("    %-20s:  %2d votes, %5.1f%%\n", 
                 c_names[idx], vote_counts[idx], percent);
         }
     }
