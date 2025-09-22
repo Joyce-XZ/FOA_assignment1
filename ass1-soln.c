@@ -167,4 +167,13 @@ int find_eliminate_candidate(int counts[], int eliminate[], int m){
         }
     }
 }   return elim;
+/*order stage2 output*/
+void print_round_stage2(int counts[], char c_names[][MAX_NAME_LEN], int m, int n, int eliminated[]){
+    for (int i = 0; i < m; i++){
+        if (!eliminated[i]){
+            double pct = 100.0 * counts[i]/n;
+            printf("%s:%d votes,%.1f%%\n", c_names[i], counts[i], pct);
+        }
+    }
+}
 //algorithms are fun!
