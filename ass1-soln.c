@@ -88,11 +88,10 @@ main(int argc, char *argv[]) {
     int lastVote[MAX_M] = {0};
     
     /* read in all ballots */
-    while (scanf("%d", &votes[n][0]) == 1) {
+    for (n = 0; n < MAX_VOTES && scanf("%d", &votes[n][0]) == 1; n++) {
         for (int j = 1; j < m; j++) {
             scanf("%d", &votes[n][j]);
         }
-        n++;
     }
     
     /* store last vote for Stage 1 */
@@ -143,10 +142,8 @@ return 0;
 /*******************************************************************/
 /* Stage 1: Display input data and voter preferences */
 void
-run_stage1(int votes[][MAX_M],
-           char c_names[][MAX_NAME_LEN],
-           int m, int n,
-           int lastVote[]) {
+run_stage1(int votes[][MAX_M], char c_names[][MAX_NAME_LEN], int m, int n,
+    int lastVote[]) {
     printf("Stage 1\n");
     printf("=======\n");
     printf("read %d candidates and %d votes\n", m, n);
@@ -154,12 +151,11 @@ run_stage1(int votes[][MAX_M],
     for (int rank = 1; rank <= m; rank++) {
         for (int k = 0; k < m; k++) {
             if (lastVote[k] == rank) {
-                printf("    rank %d: %s\n", rank, c_names[k]);
+                printf("    rank  %d: %s\n", rank, c_names[k]);
                 break;
             }
         }
     }
-    printf("\n");
 }
 
 /*******************************************************************/
@@ -168,10 +164,9 @@ run_stage1(int votes[][MAX_M],
    - check for majority winner
    - otherwise eliminate lowest candidate and redistribute */
 void
-run_stage2(int votes[][MAX_M],
-           char c_names[][MAX_NAME_LEN],
-           int m, int n) {
-    printf("\nStage 2\n");
+run_stage2(int votes[][MAX_M], char c_names[][MAX_NAME_LEN],int m, int n) {
+    printf("\n");
+    printf("Stage 2\n");
     printf("=======\n");
 
     int eliminated[MAX_M] = {0};
@@ -220,10 +215,9 @@ run_stage2(int votes[][MAX_M],
 /* Stage 3: As Stage 2, but results reported in sorted order
    - sorting by vote count (desc), then by candidate name */
 void
-run_stage3(int votes[][MAX_M],
-           char c_names[][MAX_NAME_LEN],
-           int m, int n) {
-    printf("\nStage 3\n");
+run_stage3(int votes[][MAX_M], char c_names[][MAX_NAME_LEN], int m, int n) {
+    printf("\n");
+    printf("Stage 3\n");
     printf("=======\n");
 
     int eliminated[MAX_M] = {0};
@@ -271,8 +265,8 @@ run_stage3(int votes[][MAX_M],
 /* count votes for all non-eliminated candidates,
    based on each voter's current active preference */
 void
-count_votes(int current_votes[], int eliminated[],
-            int vote_counts[], int m, int n) {
+count_votes(int current_votes[], int eliminated[], int vote_counts[],
+    int m, int n) {
     for (int i = 0; i < m; i++) {
         vote_counts[i] = 0;
     }
@@ -287,9 +281,8 @@ count_votes(int current_votes[], int eliminated[],
 /* when a candidate is eliminated, redistribute their votes
    to the next valid preference for each affected voter */
 void
-redistribute_votes(int votes[][MAX_M], int current_votes[],
-                   int eliminated[], int to_elim,
-                   int m, int n) {
+redistribute_votes(int votes[][MAX_M], int current_votes[],int eliminated[],
+    int to_elim, int m, int n) {
     for (int i = 0; i < n; i++) {
         if (current_votes[i] == to_elim) {
             int found = 0;
@@ -336,17 +329,13 @@ check_winner(int vote_counts[], int eliminated[], int m, int n) {
 /*******************************************************************/
 /* print round results in original candidate order */
 void
-print_round_results(char c_names[][MAX_NAME_LEN],
-                    int vote_counts[],
-                    int eliminated[],
-                    int m, int n,
-                    int round) {
+print_round_results(char c_names[][MAX_NAME_LEN], int vote_counts[], int eliminated[],
+    int m, int n, int round) {
     printf("round %d...\n", round);
     for (int i = 0; i < m; i++) {
         if (!eliminated[i]) {
             double percent = (double)vote_counts[i] / n * 100.0;
-            printf("    %-20s: %d votes, %.1f%%\n",
-                   c_names[i], vote_counts[i], percent);
+            printf("    %-20s:   %d votes,  %.1f%%\n", c_names[i], vote_counts[i], percent);
         }
     }
 }
@@ -354,11 +343,8 @@ print_round_results(char c_names[][MAX_NAME_LEN],
 /*******************************************************************/
 /* print round results in sorted order, using insertion_sort */
 void
-print_sorted_results(char c_names[][MAX_NAME_LEN],
-                     int vote_counts[],
-                     int eliminated[],
-                     int m, int n,
-                     int round) {
+print_sorted_results(char c_names[][MAX_NAME_LEN], int vote_counts[], int eliminated[],
+    int m, int n, int round) {
     int sorted[MAX_M];
     for (int i = 0; i < m; i++) {
         sorted[i] = i;
@@ -371,8 +357,7 @@ print_sorted_results(char c_names[][MAX_NAME_LEN],
         int idx = sorted[i];
         if (!eliminated[idx]) {
             double percent = (double)vote_counts[idx] / n * 100.0;
-            printf("    %-20s: %d votes, %.1f%%\n",
-                   c_names[idx], vote_counts[idx], percent);
+            printf("    %-20s:   %d votes,  %.1f%%\n", c_names[idx], vote_counts[idx], percent);
         }
     }
 }
@@ -381,14 +366,10 @@ print_sorted_results(char c_names[][MAX_NAME_LEN],
 /* insertion sort of candidate indices,
    comparing via vote totals and then candidate names */
 void
-insertion_sort(int sorted[],
-               int vote_counts[],
-               char c_names[][MAX_NAME_LEN],
-               int m) {
+insertion_sort(int sorted[], int vote_counts[], char c_names[][MAX_NAME_LEN], int m) {
     for (int i = 1; i < m; i++) {
         int j = i;
-        while (j > 0 &&
-               compare(sorted[j-1], sorted[j], vote_counts, c_names) > 0) {
+        while (j > 0 && compare(sorted[j-1], sorted[j], vote_counts, c_names) > 0) {
             swap(sorted, j-1, j);
             j--;
         }
@@ -400,9 +381,7 @@ insertion_sort(int sorted[],
    - sort by vote count (descending)
    - break ties by candidate name (ascending) */
 int
-compare(int a, int b,
-        int vote_counts[],
-        char c_names[][MAX_NAME_LEN]) {
+compare(int a, int b, int vote_counts[], char c_names[][MAX_NAME_LEN]) {
     if (vote_counts[a] > vote_counts[b]) {
         return -1;
     } else if (vote_counts[a] < vote_counts[b]) {
