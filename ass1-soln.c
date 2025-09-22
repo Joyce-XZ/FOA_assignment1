@@ -214,4 +214,35 @@ insertion_sort(int order[], int counts[], char c_names[][MAX_NAME_LEN], int m){
     }
     order[j+1] = key;   
 }
+void stage2(char c_names[][MAX_NAME_LEN], int votes[][MAX_M], int m, int n){
+    printf("\n");
+    printf("=======\n");
+    int elimintated[MAX_M] = {0};
+    int remaining = m;
+    int round = 1;
+    while(remaining > 1){
+        printf("round %d...\n", round);
+        int counts[MAX_M] = {0};
+        for (int i = 0; i < m; i++){
+            if(!eliminated[i]){
+                counts[i] = count_votes(i, votes, m, n, elimintaed);
+            }
+        }
+        print_round_stage2(counts, c_names, m, n, eliminated);
+        printf("----\n");
+        for (int i = 0; i < m; i++){
+            if(!eliminated[i]&&counts[i] > n/2){
+                printf("%s is declared elected\n", c_names[elim]);
+                eliminated[elim] = 1;
+                remaining--;
+                round++;
+            }
+        }
+        for (int i = 0; i < m; i++){
+            if(!eliminated[i]){
+                printf("%s is declared elected\n", c_names[i]);      
+        }
+    }
+}
+
     //algorithms are fun!
