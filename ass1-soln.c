@@ -184,5 +184,13 @@ void print_round_stage3(int counts[], char c_names[][MAX_NAME_LEN], int m, int n
             order[k++] = i;
         }
     }
-    
+/*print in sorted order*/
+    insertion_sort(order, counts, c_names, k);
+    for (int i = 0; i < k; i++){
+        int idx = order[i];
+        double pct = 100 * counts[idx]/n;
+        print("%s:%d votes,%.1f%%\n", c_names[i], counts[idx], pct);
+    }
+}
+
     //algorithms are fun!
