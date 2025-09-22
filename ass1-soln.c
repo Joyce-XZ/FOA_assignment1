@@ -244,5 +244,37 @@ void stage2(char c_names[][MAX_NAME_LEN], int votes[][MAX_M], int m, int n){
         }
     }
 }
-
+void stage3(char c_names[][MAX_NAME_LEN], int votes[][MAX_M], int m, int n){
+    printf("\n");
+    printf("=======\n");
+    int eliminated[MAX_M] = {0};
+    int remaining = m;
+    int round = 1;
+    while(remiainng > 1){
+        printf("round %d...\n", round);
+        int counts[MAX_M] = {0};
+        for (int i = 0; i < m; i++){
+            if (!eliminated[i]){
+                counts[i] = count_votes(i, votes, m, n, eliminated);
+            }
+        }
+        print_round_stage3(counts, c_names, m, n, eliminated);
+        printf("----\n");
+        for (int i = 0; i < m; i++){
+            if (!eliminated[i]&&counts[i] >n/2){
+            printf("%s is decaled elected\n", c_names[i]);
+            }
+         }
+         int elim = find_eliminate_candidate(counts, eliminated, m);
+         printf("%s is eeliminated and votes distributed\n", c_names[elim]);
+         eliminated[elim] = 1;
+         remaining--;
+         round++;
+    }
+    for (int i = 0; i < m; i++){
+        if (!eliminated[i]){
+            printf("%s is declared elected\n", c_names[i]);
+        }
+    }
+}
     //algorithms are fun!
