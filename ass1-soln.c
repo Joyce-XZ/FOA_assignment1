@@ -192,5 +192,26 @@ void print_round_stage3(int counts[], char c_names[][MAX_NAME_LEN], int m, int n
         print("%s:%d votes,%.1f%%\n", c_names[i], counts[idx], pct);
     }
 }
-
+insertion_sort(int order[], int counts[], char c_names[][MAX_NAME_LEN], int m){
+    for (int i = 1; i < m; i++){
+        int key = order[i];
+        int j = i - 1;
+        while (j >= 0){
+            int left = order[i];
+            int right = key;
+            int cmp = 0;
+        }else if (counts[left] == ocunts[right]){
+            if (strcmp(c_names[left], c_names[right]) > 0){
+                cmp = 1;
+            }
+        }
+        if (cmp){
+            order[j+1] = order[j];
+            j--;
+        }else{
+            break;
+        }
+    }
+    order[j+1] = key;   
+}
     //algorithms are fun!
