@@ -32,7 +32,7 @@ understand that an allegation of Student General Misconduct may arise
 regardless of whether or not I personally make use of such solutions or
 sought benefit from such actions.
 Signed by: Zhuyirui Xu 1750652
-Dated: 15/09/2025
+Dated: 19/09/2025
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,57 +51,55 @@ int getword(char W[], int limit);
 // main program provides traffic control
 int
 main(int argc, char *argv[]) {
-// write your main program here
-/*First, read the number of candidates in the first line of input*/
     int m;
-    if (scanf("%d",&m) != 1) {
-    /*Invalid input,exit program*/
+    if (scanf("%d", &m) != 1) {
         return 0;
     }
 
-    /*Declare a char array to store the names of the candidates*/
     char c_names[MAX_M][MAX_NAME_LEN];
 
-    /*Read m candidate names from the second line of input*/
+    /* read candidate names */
     for (int i = 0; i < m; i++) {
         getword(c_names[i], MAX_NAME_LEN - 1);
     }
 
-    /*Initialise the vote count*/
-    int votes[MAX_VOTES][MAX_M];
     int n = 0;
-    int last_vote[MAX_M];
-
-    /*Read the first rank values of a vote*/
+    int votes[MAX_VOTES][MAX_M];
+    int lastVote[MAX_M];
+    
+    /* read in all ballots */
     while (scanf("%d", &votes[n][0]) == 1) {
-        /*Read rest of the ranks ofr this voter*/
         for (int j = 1; j < m; j++) {
             scanf("%d", &votes[n][j]);
         }
-        /*Increase the vote count after reading one completed vote*/
         n++;
     }
+    
+    /* store last vote for Stage 1 */
+    for (int i = 0; i < m; i++) {
+        lastVote[i] = votes[n-1][i];
+    }
 
-    /*Print Stage 1 Output in required format*/
+    /* Stage 1 output */
     printf("\n");
     printf("Stage 1\n");
     printf("=======\n");
     printf("read %d candidates and %d votes\n", m, n);
     printf("voter %d preferences...\n", n);
-
-    /*Map the last voter's preference rankings to candidates'names*/
-    for (int rank = 1; rank <= m; rank++){
-        for (int k = 0; k < m; k++){
-            if (votes[n-1][k] == rank){
-                printf("    rank  %d: %s\n", rank, c_names[k]);
+    for (int rank = 1; rank <= m; rank++) {
+        for (int k = 0; k < m; k++) {
+            if (lastVote[k] == rank) {
+                printf("    rank %d: %s\n", rank, c_names[k]);
                 break;
             }
         }
     }
- // Run Stage 2 and Stage 3
- run_stage2(votes, c_names, m, n);
- run_stage3(votes, c_names, m, n);
-// all done, time to go home
+    printf("\n");
+
+    /* run subsequent stages */
+    run_stage2(votes, c_names, m, n);
+    run_stage3(votes, c_names, m, n);
+
     printf("tadaa!\n");
     return 0;
 }
@@ -134,18 +132,22 @@ return 0;
 }
 ///////////////////////////////////////////////////////////////////////
 // add your other functions here
-// Stage 2: Preferential voting with candidate elimination
+/*******************************************************************/
+/* Stage 2: Preferential voting with candidate elimination
+   - repeatedly count votes
+   - check for majority winner
+   - otherwise eliminate lowest candidate and redistribute */
 void
 run_stage2(int votes[][MAX_M], char c_names[][MAX_NAME_LEN], int m, int n) {
     printf("\n");
     printf("Stage 2\n");
     printf("=======\n");
 
-    int eliminated[MAX_M] = {0};  
-    int vote_counts[MAX_M];  
-    int current_votes[MAX_VOTES];  
+    int eliminated[MAX_M] = {0};
+    int vote_counts[MAX_M];
+    int current_votes[MAX_VOTES];
 
-    // Initialize each voter's current vote to their first preference
+    /* initialize voters’ current choice to first preference */
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             if (votes[i][j] == 1) {
@@ -155,43 +157,49 @@ run_stage2(int votes[][MAX_M], char c_names[][MAX_NAME_LEN], int m, int n) {
         }
     }
 
-    int round = 1;  
-    int winner = -1;  
+    int round = 1;
+    int winner = -1;
 
     while (winner == -1) {
-        count_votes(current_votes, eliminated, vote_counts, m, n);  
-        print_round_results(c_names, vote_counts, eliminated, m, n, round);  
+        count_votes(current_votes, eliminated, vote_counts, m, n);
+        print_round_results(c_names, vote_counts, eliminated, m, n, round);
 
-        winner = check_winner(vote_counts, eliminated, m, n);  
+        winner = check_winner(vote_counts, eliminated, m, n);
         if (winner != -1) {
-            printf("----\n");
-            printf("%s is declared elected\n", c_names[winner]);
+            printf("    ----\n");
+            printf("    %s is declared elected\n", c_names[winner]);
+            printf("\n");
             break;
         }
 
-        int to_elim = find_eliminate_candidate(vote_counts, eliminated, m);  
-        printf("----\n");
-        printf("%s is eliminated and votes distributed\n", c_names[to_elim]);
-        eliminated[to_elim] = 1;  
+        int to_elim = find_eliminate_candidate(vote_counts, eliminated, m);
+        printf("    ----\n");
+        printf("    %s is eliminated and votes distributed\n",
+               c_names[to_elim]);
+        printf("\n");
+        eliminated[to_elim] = 1;
 
-        redistribute_votes(votes, current_votes, eliminated, to_elim, m, n);  
-        round++;  
+        redistribute_votes(votes, current_votes, eliminated,
+                           to_elim, m, n);
+        round++;
     }
 }
 
-///////////////////////////////////////////////////////////////////////
-// Stage 3: Preferential voting with sorted output
+/*******************************************************************/
+/* Stage 3: As Stage 2, but results reported in sorted order
+   - sorting by vote count (desc), then by candidate name */
 void
-run_stage3(int votes[][MAX_M], char c_names[][MAX_NAME_LEN], int m, int n) {
-    printf("\n");
-    printf("Stage 3\n");
-    printf("=======\n");
+run_stage3(int votes[][MAX_M],
+           char c_names[][MAX_NAME_LEN],
+           int m, int n) {
+            printf("\n");
+            printf("Stage 3\n");
+            printf("=======\n");
 
-    int eliminated[MAX_M] = {0};  
-    int vote_counts[MAX_M];  
-    int current_votes[MAX_VOTES];  
+    int eliminated[MAX_M] = {0};
+    int vote_counts[MAX_M];
+    int current_votes[MAX_VOTES];
 
-    // Initialize each voter's current vote to first preference
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             if (votes[i][j] == 1) {
@@ -201,152 +209,181 @@ run_stage3(int votes[][MAX_M], char c_names[][MAX_NAME_LEN], int m, int n) {
         }
     }
 
-    int round = 1;  
-    int winner = -1;  
+    int round = 1;
+    int winner = -1;
 
     while (winner == -1) {
-        count_votes(current_votes, eliminated, vote_counts, m, n);  
-        print_sorted_results(c_names, vote_counts, eliminated, m, n, round);  
+        count_votes(current_votes, eliminated, vote_counts, m, n);
+        print_sorted_results(c_names, vote_counts, eliminated, m, n, round);
 
-        winner = check_winner(vote_counts, eliminated, m, n);  
+        winner = check_winner(vote_counts, eliminated, m, n);
         if (winner != -1) {
-            printf("----\n");
-            printf("%s is declared elected\n", c_names[winner]);
+            printf("    ----\n");
+            printf("    %s is declared elected\n", c_names[winner]);
+            printf("\n");
             break;
         }
 
-        int to_elim = find_eliminate_candidate(vote_counts, eliminated, m);  
-        printf("----\n");
-        printf("%s is eliminated and votes distributed\n", c_names[to_elim]);
-        eliminated[to_elim] = 1;  
+        int to_elim = find_eliminate_candidate(vote_counts, eliminated, m);
+        printf("    ----\n");
+        printf("    %s is eliminated and votes distributed\n",
+               c_names[to_elim]);
+        printf("\n");
+        eliminated[to_elim] = 1;
 
-        redistribute_votes(votes, current_votes, eliminated, to_elim, m, n);  
-        round++;  
+        redistribute_votes(votes, current_votes, eliminated,
+                           to_elim, m, n);
+        round++;
     }
 }
 
-///////////////////////////////////////////////////////////////////////
-// Count votes for each active candidate in this round
+/*******************************************************************/
+/* count votes for all non-eliminated candidates,
+   based on each voter's current active preference */
 void
-count_votes(int current_votes[], int eliminated[], int vote_counts[], int m, int n) {
+count_votes(int current_votes[], int eliminated[],
+            int vote_counts[], int m, int n) {
     for (int i = 0; i < m; i++) {
-        vote_counts[i] = 0;  
+        vote_counts[i] = 0;
     }
     for (int i = 0; i < n; i++) {
         if (!eliminated[current_votes[i]]) {
-            vote_counts[current_votes[i]]++;  
+            vote_counts[current_votes[i]]++;
         }
     }
 }
 
-///////////////////////////////////////////////////////////////////////
-// Redistribute votes from eliminated candidate
+/*******************************************************************/
+/* when a candidate is eliminated, redistribute their votes
+   to the next valid preference for each affected voter */
 void
-redistribute_votes(int votes[][MAX_M], int current_votes[], int eliminated[], int to_elim, int m, int n) {
+redistribute_votes(int votes[][MAX_M], int current_votes[],
+                   int eliminated[], int to_elim,
+                   int m, int n) {
     for (int i = 0; i < n; i++) {
         if (current_votes[i] == to_elim) {
-            for (int rank = 2; rank <= m; rank++) {
-                for (int j = 0; j < m; j++) {
+            int found = 0;
+            for (int rank = 2; rank <= m && !found; rank++) {
+                for (int j = 0; j < m && !found; j++) {
                     if (votes[i][j] == rank && !eliminated[j]) {
-                        current_votes[i] = j;  
-                        goto NEXT_BALLOT;     
+                        current_votes[i] = j;
+                        found = 1;
                     }
                 }
             }
-            NEXT_BALLOT: ;  
         }
     }
 }
 
-///////////////////////////////////////////////////////////////////////
-// Find candidate with minimum votes (break ties by input order)
+/*******************************************************************/
+/* find the candidate with the smallest vote total,
+   breaking ties by input order */
 int
 find_eliminate_candidate(int vote_counts[], int eliminated[], int m) {
-    int min_votes = MAX_VOTES + 1;  
-    int to_elim = -1;  
+    int min_votes = MAX_VOTES + 1;
+    int to_elim = -1;
     for (int i = 0; i < m; i++) {
         if (!eliminated[i] && vote_counts[i] < min_votes) {
             min_votes = vote_counts[i];
             to_elim = i;
         }
     }
-    return to_elim;  
+    return to_elim;
 }
 
-///////////////////////////////////////////////////////////////////////
-// Check for majority winner (>50% of total votes)
+/*******************************************************************/
+/* check if any candidate has >50% of the active votes */
 int
 check_winner(int vote_counts[], int eliminated[], int m, int n) {
     for (int i = 0; i < m; i++) {
         if (!eliminated[i] && vote_counts[i] > n/2) {
-            return i;  
+            return i;
         }
     }
-    return -1;  
+    return -1;
 }
 
-///////////////////////////////////////////////////////////////////////
-// Print results in original candidate order
+/*******************************************************************/
+/* print round results in original candidate order */
 void
-print_round_results(char c_names[][MAX_NAME_LEN], int vote_counts[], int eliminated[], int m, int n, int round) {
+print_round_results(char c_names[][MAX_NAME_LEN],
+                    int vote_counts[],
+                    int eliminated[],
+                    int m, int n,
+                    int round) {
     printf("round %d...\n", round);
     for (int i = 0; i < m; i++) {
         if (!eliminated[i]) {
-            double percent = (double)vote_counts[i] / n * 100.0;  
-            printf("%s : %d votes, %.1f%%\n", c_names[i], vote_counts[i], percent);
+            double percent = (double)vote_counts[i] / n * 100.0;
+            printf("    %-20s: %d votes, %.1f%%\n",
+                   c_names[i], vote_counts[i], percent);
         }
     }
 }
 
-///////////////////////////////////////////////////////////////////////
-// Print results in sorted order using insertion_sort
+/*******************************************************************/
+/* print round results in sorted order, using insertion_sort */
 void
-print_sorted_results(char c_names[][MAX_NAME_LEN], int vote_counts[], int eliminated[], int m, int n, int round) {
-    int sorted[MAX_M];  
+print_sorted_results(char c_names[][MAX_NAME_LEN],
+                     int vote_counts[],
+                     int eliminated[],
+                     int m, int n,
+                     int round) {
+    int sorted[MAX_M];
     for (int i = 0; i < m; i++) {
-        sorted[i] = i;  
+        sorted[i] = i;
     }
 
-    insertion_sort(sorted, vote_counts, c_names, m);  
+    insertion_sort(sorted, vote_counts, c_names, m);
 
     printf("round %d...\n", round);
     for (int i = 0; i < m; i++) {
-        int idx = sorted[i];  
+        int idx = sorted[i];
         if (!eliminated[idx]) {
             double percent = (double)vote_counts[idx] / n * 100.0;
-            printf("%s : %d votes, %.1f%%\n", c_names[idx], vote_counts[idx], percent);
+            printf("    %-20s: %d votes, %.1f%%\n",
+                   c_names[idx], vote_counts[idx], percent);
         }
     }
 }
 
-///////////////////////////////////////////////////////////////////////
-// Insertion sort using compare() and swap()
+/*******************************************************************/
+/* insertion sort of candidate indices,
+   comparing via vote totals and then candidate names */
 void
-insertion_sort(int sorted[], int vote_counts[], char c_names[][MAX_NAME_LEN], int m) {
+insertion_sort(int sorted[],
+               int vote_counts[],
+               char c_names[][MAX_NAME_LEN],
+               int m) {
     for (int i = 1; i < m; i++) {
         int j = i;
-        while (j > 0 && compare(sorted[j-1], sorted[j], vote_counts, c_names) > 0) {
-            swap(sorted, j-1, j);  
+        while (j > 0 &&
+               compare(sorted[j-1], sorted[j], vote_counts, c_names) > 0) {
+            swap(sorted, j-1, j);
             j--;
         }
     }
 }
 
-///////////////////////////////////////////////////////////////////////
-// Compare two candidates (by votes desc, then name asc)
+/*******************************************************************/
+/* comparison function for insertion_sort:
+   - sort by vote count (descending)
+   - break ties by candidate name (ascending) */
 int
-compare(int a, int b, int vote_counts[], char c_names[][MAX_NAME_LEN]) {
+compare(int a, int b,
+        int vote_counts[],
+        char c_names[][MAX_NAME_LEN]) {
     if (vote_counts[a] > vote_counts[b]) {
-        return -1;  
+        return -1;
     } else if (vote_counts[a] < vote_counts[b]) {
-        return 1;   
+        return 1;
     } else {
-        return strcmp(c_names[a], c_names[b]);  
+        return strcmp(c_names[a], c_names[b]);
     }
 }
 
-///////////////////////////////////////////////////////////////////////
-// Swap two integers in an array
+/*******************************************************************/
+/* swap two integer indices in an array */
 void
 swap(int arr[], int i, int j) {
     int temp = arr[i];
