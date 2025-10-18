@@ -7,10 +7,10 @@
 #define STAGE_0_HEADER "==STAGE 0============================"
 #define STAGE_1_HEADER "==STAGE 1============================"
 #define STAGE_2_HEADER "==STAGE 2============================"
-#define END_HEADER "========================================"
 #define DELIMITER "-------------------------------------"
 #define INITIAL_CAPACITY 0
 #define GROWTH_FACTOR 2
+#define END_HEADER "======================================="
 
 typedef struct {
     int *rows;
@@ -30,11 +30,11 @@ int matrix_equals(matrix_t *m1, matrix_t *m2);
 
 matrix_t* matrix_read(int nrows, int ncols);
 void matrix_print(matrix_t *mat, char *title);
-matrix_t* matrix_copy(matrix_t *mat);
 
 int find_matrix_index(matrix_t *mat, int r, int c);
 void resize_if_needed(matrix_t *mat);
 void remove_element(matrix_t *mat, int index);
+matrix_t* matrix_copy(matrix_t *mat);
 
 void op_set(matrix_t *mat, int r, int c, int val);
 void op_swap(matrix_t *mat, int r1, int c1, int r2, int c2);
@@ -168,26 +168,6 @@ matrix_t* matrix_create(int nrows, int ncols) {
     return mat;
 }
 
-matrix_t* matrix_copy(matrix_t *mat) {
-    matrix_t *copy = matrix_create(mat->nrows, mat->ncols);
-    copy->nnz = mat->nnz;
-    copy->capacity = mat->capacity;
-    
-    copy->rows = (int*)malloc(sizeof(int) * mat->capacity);
-    copy->cols = (int*)malloc(sizeof(int) * mat->capacity);
-    copy->vals = (int*)malloc(sizeof(int) * mat->capacity);
-    
-    assert(copy->rows != NULL && copy->cols != NULL && copy->vals != NULL);
-    
-    for (int i = 0; i < mat->nnz; i++) {
-        copy->rows[i] = mat->rows[i];
-        copy->cols[i] = mat->cols[i];
-        copy->vals[i] = mat->vals[i];
-    }
-    
-    return copy;
-}
-
 void matrix_free(matrix_t *mat) {
     if (mat) {
         free(mat->rows);
@@ -195,6 +175,14 @@ void matrix_free(matrix_t *mat) {
         free(mat->vals);
         free(mat);
     }
+}
+
+matrix_t* matrix_copy(matrix_t *mat) {
+    matrix_t *copy = matrix_create(mat->nrows, mat->ncols);
+    for (int i = 0; i < mat->nnz; i++) {
+        matrix_set(copy, mat->rows[i], mat->cols[i], mat->vals[i]);
+    }
+    return copy;
 }
 
 int matrix_get(matrix_t *mat, int r, int c) {
@@ -288,7 +276,11 @@ void matrix_print(matrix_t *mat, char *title) {
 
 void resize_if_needed(matrix_t *mat) {
     if (mat->nnz >= mat->capacity) {
-        mat->capacity *= GROWTH_FACTOR;
+        if (mat->capacity == 0) {
+            mat->capacity = 1;
+        } else {
+            mat->capacity *= GROWTH_FACTOR;
+        }
         mat->rows = (int*)realloc(mat->rows, sizeof(int) * mat->capacity);
         mat->cols = (int*)realloc(mat->cols, sizeof(int) * mat->capacity);
         mat->vals = (int*)realloc(mat->vals, sizeof(int) * mat->capacity);
@@ -323,10 +315,13 @@ void op_multiply(matrix_t *mat, int val) {
 }
 
 void op_add(matrix_t *mat, int val) {
-    for (int i = 0; i < mat->nnz; i++) {
+    int i = 0;
+    while (i < mat->nnz) {
         mat->vals[i] += val;
         if (mat->vals[i] == 0) {
             remove_element(mat, i);
+        } else {
+            i++;
         }
     }
 }
