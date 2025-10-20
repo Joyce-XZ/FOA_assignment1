@@ -38,7 +38,6 @@
   Signed by: Zhuyirui Xu
   Dated:     17 October 2025
 */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -49,10 +48,11 @@
 #define THEEND "==THE END============================\n"    // end message
 #define MTXDIM "%dx%d\n"                // matrix dimensions input format
 #define MAX_LINE_LEN 1000
-#define DELIMITER "-------------------------------------"
 #define INITIAL_CAPACITY 0
 #define GROWTH_FACTOR 2
-#define END_HEADER "======================================="
+#define MAX_SMALL_DIM 35
+#define MAX_SMALL_VAL 9
+#define DELIMITER "-------------------------------------"
 
 /* TYPE DEFINITIONS ----------------------------------------------------------*/
 // Compressed Sparse Row (CSR) matrix representation
@@ -67,23 +67,20 @@ typedef struct {
 } CSRMatrix_t;
 
 /* FUNCTION PROTOTYPES -------------------------------------------------------*/
-
 /* INTERFACE FUNCTIONS FOR WORKING WITH CSR MATRICES -------------------------*/
 CSRMatrix_t*  csr_matrix_create(int, int);        // create empty CSR matrix
 void          csr_matrix_free(CSRMatrix_t*);      // free input CSR matrix
-int           csr_matrix_get(CSRMatrix_t*, int, int);
-void          csr_matrix_set(CSRMatrix_t*, int, int, int);
-int           csr_matrix_equals(CSRMatrix_t*, CSRMatrix_t*);
-CSRMatrix_t*  csr_matrix_read(int, int);
-void          csr_matrix_print(CSRMatrix_t*, char*);
-CSRMatrix_t*  csr_matrix_copy(CSRMatrix_t*);
+int           csr_matrix_get(CSRMatrix_t*, int, int); // get matrix element
+void          csr_matrix_set(CSRMatrix_t*, int, int, int); // set matrix element
+int           csr_matrix_equals(CSRMatrix_t*, CSRMatrix_t*); // check equality
+CSRMatrix_t*  csr_matrix_read(int, int);          // read matrix from input
+void          csr_matrix_print(CSRMatrix_t*, char*); // print matrix
+CSRMatrix_t*  csr_matrix_copy(CSRMatrix_t*);      // copy matrix
+int           is_small_matrix(CSRMatrix_t*);      // check if matrix is small
+void          resize_if_needed(CSRMatrix_t*);     // resize matrix if needed
+int           find_element_index(CSRMatrix_t*, int, int); // find element index
 
-// Helper functions
-int find_matrix_index(CSRMatrix_t*, int, int);
-void resize_if_needed(CSRMatrix_t*);
-void remove_element(CSRMatrix_t*, int);
-
-// Operation functions
+// Operation prototypes
 void op_set(CSRMatrix_t*, int, int, int);
 void op_swap(CSRMatrix_t*, int, int, int, int);
 void op_multiply(CSRMatrix_t*, int);
@@ -97,96 +94,109 @@ void op_swap_col(CSRMatrix_t*, int, int);
 int main(void) {
     int stage = 0, rows, cols;
     char line[MAX_LINE_LEN];
-
-    printf(SDELIM, stage++);                      // print Stage 0 header
-    assert(scanf(MTXDIM, &rows, &cols) == 2);    // assert matrix dimensions
     
+    // Stage 0 initialization
+    printf(SDELIM, stage++);                      // print Stage 0 header
+    
+    // Read matrix dimensions
+    fgets(line, MAX_LINE_LEN, stdin);
+    assert(sscanf(line, MTXDIM, &rows, &cols) == 2);
+    
+    // Create initial and target matrices
     CSRMatrix_t* initial = csr_matrix_read(rows, cols);
     CSRMatrix_t* target = csr_matrix_read(rows, cols);
     CSRMatrix_t* current = csr_matrix_copy(initial);
-
+    
+    // Print initial and target matrices
     csr_matrix_print(initial, "Initial matrix");
     printf("%s\n", DELIMITER);
     csr_matrix_print(target, "Target matrix");
-
+    
+    // Check if already solved
+    if (csr_matrix_equals(current, target)) {
+        printf("%s\n", DELIMITER);
+        printf("TA-DAA!!! SOLVED IN 0 STEP(S)!\n");
+        printf(THEEND);
+        csr_matrix_free(initial);
+        csr_matrix_free(target);
+        csr_matrix_free(current);
+        return EXIT_SUCCESS;
+    }
+    
     int step_count = 0;
     int stage1_printed = 0;
-
+    
+    // Process operations
     while (fgets(line, MAX_LINE_LEN, stdin)) {
+        // Remove newline and skip empty lines
         line[strcspn(line, "\n")] = 0;
-
-        if (strlen(line) == 0) {
-            continue;
-        }
-
-        char op_type = line[0];
-
-        int is_stage2_op = (op_type == 'r' || op_type == 'c' ||
-                            op_type == 'R' || op_type == 'C');
+        if (strlen(line) == 0) continue;
         
+        char op_type = line[0];
+        
+        // Check for stage 2 operations
+        int is_stage2_op = (op_type == 'r' || op_type == 'c' ||
+                           op_type == 'R' || op_type == 'C');
+        
+        // Print stage headers when needed
         if (is_stage2_op && stage == 1) {
-            printf(SDELIM, stage++);
+            printf(SDELIM, stage++);  // Print Stage 2 header
         } else if (!stage1_printed && stage == 1) {
-            printf(SDELIM, stage++);
+            printf(SDELIM, stage++);  // Print Stage 1 header
             stage1_printed = 1;
         }
-
+        
+        // Print instruction
         printf("INSTRUCTION %s\n", line);
-
+        
+        // Parse and execute operation
         if (op_type == 's') {
             int r, c, val;
             sscanf(line + 2, "%d,%d,%d", &r, &c, &val);
             op_set(current, r, c, val);
-
         } else if (op_type == 'S') {
             int r1, c1, r2, c2;
             sscanf(line + 2, "%d,%d,%d,%d", &r1, &c1, &r2, &c2);
             op_swap(current, r1, c1, r2, c2);
-
         } else if (op_type == 'm') {
             int val;
             sscanf(line + 2, "%d", &val);
             op_multiply(current, val);
-
         } else if (op_type == 'a') {
             int val;
             sscanf(line + 2, "%d", &val);
             op_add(current, val);
-
         } else if (op_type == 'r') {
             int r1, r2;
             sscanf(line + 2, "%d,%d", &r1, &r2);
             op_copy_row(current, r1, r2);
-
         } else if (op_type == 'c') {
             int c1, c2;
             sscanf(line + 2, "%d,%d", &c1, &c2);
             op_copy_col(current, c1, c2);
-
         } else if (op_type == 'R') {
             int r1, r2;
             sscanf(line + 2, "%d,%d", &r1, &r2);
             op_swap_row(current, r1, r2);
-
         } else if (op_type == 'C') {
             int c1, c2;
             sscanf(line + 2, "%d,%d", &c1, &c2);
             op_swap_col(current, c1, c2);
-
         } else {
             break;
         }
-
+        
         step_count++;
-
+        
+        // Print current and target matrices
         csr_matrix_print(current, "Current matrix");
         csr_matrix_print(target, "Target matrix");
-
+        
+        // Check if solved
         if (csr_matrix_equals(current, target)) {
             printf("%s\n", DELIMITER);
             printf("TA-DAA!!! SOLVED IN %d STEP(S)!\n", step_count);
             printf(THEEND);
-
             csr_matrix_free(initial);
             csr_matrix_free(target);
             csr_matrix_free(current);
@@ -194,287 +204,341 @@ int main(void) {
         }
     }
     
-    printf(THEEND);                               // print "THE END" message
-    csr_matrix_free(initial);                     // free initial matrix
-    csr_matrix_free(target);                      // free target matrix
-    csr_matrix_free(current);                     // free current matrix
-    return EXIT_SUCCESS;                          // algorithms are fun!!!
+    // No solution found
+    printf(THEEND);
+    csr_matrix_free(initial);
+    csr_matrix_free(target);
+    csr_matrix_free(current);
+    return EXIT_SUCCESS;
 }
 
-// Create an empty CSR  matrix of nrows rows and ncols columns
+/* CSR matrix implementation -------------------------------------------------*/
+
+// Create an empty CSR matrix of nrows rows and ncols columns
 CSRMatrix_t *csr_matrix_create(int nrows, int ncols) {
-    assert(nrows >= 0 && ncols >= 0);   // check matrix dimensions
-    // allocate memory for this matrix
+    assert(nrows >= 0 && ncols >= 0);
     CSRMatrix_t *A = (CSRMatrix_t*)malloc(sizeof(CSRMatrix_t));
-    assert(A!=NULL);            // check if memory was allocated
-    A->rows = nrows;            // set number of rows in the matrix
-    A->cols = ncols;            // set number of columns in the matrix
-    A->nnz  = 0;                // initialize with no non-zero values
-    A->cap  = 0;                // initialize capacity to no non-zero values
-    A->vals = NULL;             // no values to store...
-    A->cidx = NULL;             // so there is no need to store column indices
-    // allocate array to store row pointers
-    A->rptr = (int*)malloc((size_t)(A->rows+1)*sizeof(int));
-    assert(A->rptr!=NULL);
-    for (int i = 0; i <= A->rows; i++) {    // no values, so initialize ...
-        A->rptr[i] = 0;                     // ... all row pointers to zeros
+    assert(A != NULL);
+    A->rows = nrows;
+    A->cols = ncols;
+    A->nnz = 0;
+    A->cap = INITIAL_CAPACITY;
+    A->vals = NULL;
+    A->cidx = NULL;
+    A->rptr = (int*)malloc((size_t)(A->rows + 1) * sizeof(int));
+    assert(A->rptr != NULL);
+    for (int i = 0; i <= A->rows; i++) {
+        A->rptr[i] = 0;
     }
     return A;
 }
 
 // Free input CSR matrix A
 void csr_matrix_free(CSRMatrix_t *A) {
-    assert(A!=NULL);
-    free(A->vals);      // free matrix values
-    free(A->cidx);      // free column indices
-    free(A->rptr);      // free row pointers
-    free(A);            // free matrix
+    assert(A != NULL);
+    free(A->vals);
+    free(A->cidx);
+    free(A->rptr);
+    free(A);
 }
 
-int csr_matrix_get(CSRMatrix_t *mat, int r, int c) {
-    assert(r >= 0 && r < mat->rows);
-    assert(c >= 0 && c < mat->cols);
-    
-    // Find the value in CSR format
-    int start = mat->rptr[r];
-    int end = mat->rptr[r + 1];
-    
-    for (int i = start; i < end; i++) {
-        if (mat->cidx[i] == c) {
-            return mat->vals[i];
-        }
+// Resize CSR matrix if necessary
+void resize_if_needed(CSRMatrix_t *A) {
+    if (A->nnz >= A->cap) {
+        int new_cap = (A->cap == 0) ? 1 : A->cap * GROWTH_FACTOR;
+        A->vals = (int*)realloc(A->vals, sizeof(int) * new_cap);
+        A->cidx = (int*)realloc(A->cidx, sizeof(int) * new_cap);
+        assert(A->vals != NULL && A->cidx != NULL);
+        A->cap = new_cap;
     }
-    return 0;
 }
 
-void csr_matrix_set(CSRMatrix_t *mat, int r, int c, int val) {
-    assert(r >= 0 && r < mat->rows);
-    assert(c >= 0 && c < mat->cols);
-    
-    int start = mat->rptr[r];
-    int end = mat->rptr[r + 1];
-    
-    // Find existing element using binary search for efficiency
-    int pos = -1;
-    int left = start;
-    int right = end - 1;
-    
-    while (left <= right) {
-        int mid = left + (right - left) / 2;
-        if (mat->cidx[mid] == c) {
-            pos = mid;
-            break;
-        } else if (mat->cidx[mid] < c) {
-            left = mid + 1;
-        } else {
-            right = mid - 1;
+// Find index of element at (r,c) in CSR matrix
+int find_element_index(CSRMatrix_t *A, int r, int c) {
+    for (int i = A->rptr[r]; i < A->rptr[r + 1]; i++) {
+        if (A->cidx[i] == c) {
+            return i;
         }
     }
+    return -1;
+}
+
+// Get element value at (r,c)
+int csr_matrix_get(CSRMatrix_t *A, int r, int c) {
+    assert(r >= 0 && r < A->rows && c >= 0 && c < A->cols);
+    int idx = find_element_index(A, r, c);
+    return (idx != -1) ? A->vals[idx] : 0;
+}
+
+// Set element value at (r,c)
+void csr_matrix_set(CSRMatrix_t *A, int r, int c, int val) {
+    assert(r >= 0 && r < A->rows && c >= 0 && c < A->cols);
+    int idx = find_element_index(A, r, c);
     
-    if (pos >= 0) {
+    if (idx != -1) {
         if (val == 0) {
             // Remove element
-            for (int i = pos; i < mat->nnz - 1; i++) {
-                mat->vals[i] = mat->vals[i + 1];
-                mat->cidx[i] = mat->cidx[i + 1];
+            for (int i = idx; i < A->nnz - 1; i++) {
+                A->vals[i] = A->vals[i + 1];
+                A->cidx[i] = A->cidx[i + 1];
             }
-            mat->nnz--;
+            A->nnz--;
+            
             // Update row pointers
-            for (int i = r + 1; i <= mat->rows; i++) {
-                mat->rptr[i]--;
+            for (int i = r + 1; i <= A->rows; i++) {
+                A->rptr[i]--;
             }
         } else {
-            mat->vals[pos] = val;
+            // Update existing element
+            A->vals[idx] = val;
         }
-    } else {
-        if (val != 0) {
-            // Insert new element
-            resize_if_needed(mat);
-            
-            // Insert at the correct position to maintain column order
-            int insert_pos = left;
-            
-            // Shift elements to make room
-            for (int i = mat->nnz; i > insert_pos; i--) {
-                mat->vals[i] = mat->vals[i - 1];
-                mat->cidx[i] = mat->cidx[i - 1];
-            }
-            
-            mat->vals[insert_pos] = val;
-            mat->cidx[insert_pos] = c;
-            mat->nnz++;
-            
-            // Update row pointers
-            for (int i = r + 1; i <= mat->rows; i++) {
-                mat->rptr[i]++;
-            }
+    } else if (val != 0) {
+        // Add new element
+        resize_if_needed(A);
+        
+        // Shift elements to make space
+        int insert_pos = A->rptr[r + 1];
+        for (int i = A->nnz; i > insert_pos; i--) {
+            A->vals[i] = A->vals[i - 1];
+            A->cidx[i] = A->cidx[i - 1];
+        }
+        
+        // Insert new element
+        A->vals[insert_pos] = val;
+        A->cidx[insert_pos] = c;
+        A->nnz++;
+        
+        // Update row pointers
+        for (int i = r + 1; i <= A->rows; i++) {
+            A->rptr[i]++;
         }
     }
 }
 
-int csr_matrix_equals(CSRMatrix_t *m1, CSRMatrix_t *m2) {
-    if (m1->rows != m2->rows || m1->cols != m2->cols) {
+// Check if two matrices are equal (按图片要求实现)
+int csr_matrix_equals(CSRMatrix_t *A, CSRMatrix_t *B) {
+    if (A->rows != B->rows || A->cols != B->cols) {
         return 0;
     }
-
-    for (int r = 0; r < m1->rows; r++) {
-        for (int c = 0; c < m1->cols; c++) {
-            if (csr_matrix_get(m1, r, c) != csr_matrix_get(m2, r, c)) {
-                return 0;
-            }
+    
+    if (A->nnz != B->nnz) {
+        return 0;
+    }
+    
+    for (int i = 0; i < A->nnz; i++) {
+        int r = 0;
+        while (r < A->rows && A->rptr[r + 1] <= i) {
+            r++;
+        }
+        int c = A->cidx[i];
+        int valA = A->vals[i];
+        
+        int valB = csr_matrix_get(B, r, c);
+        
+        if (valA != valB) {
+            return 0;
         }
     }
-
+    
+    for (int i = 0; i < B->nnz; i++) {
+        int r = 0;
+        while (r < B->rows && B->rptr[r + 1] <= i) {
+            r++;
+        }
+        int c = B->cidx[i];
+        int valB = B->vals[i];
+        
+        int valA = csr_matrix_get(A, r, c);
+        
+        if (valA != valB) {
+            return 0;
+        }
+    }
+    
     return 1;
 }
 
-CSRMatrix_t* csr_matrix_read(int nrows, int ncols) {
-    char line[1000];
-    CSRMatrix_t *mat = csr_matrix_create(nrows, ncols);
-
-    while (fgets(line, 1000, stdin)) {
-        if (line[0] == '#') {
-            break;
-        }
-
+// Read matrix from input
+CSRMatrix_t* csr_matrix_read(int rows, int cols) {
+    CSRMatrix_t *A = csr_matrix_create(rows, cols);
+    char line[MAX_LINE_LEN];
+    
+    while (fgets(line, MAX_LINE_LEN, stdin)) {
+        line[strcspn(line, "\n")] = 0;
+        if (strlen(line) == 0) continue;
+        if (line[0] == '#') break;
+        
         int r, c, val;
         if (sscanf(line, "%d,%d,%d", &r, &c, &val) == 3) {
-            csr_matrix_set(mat, r, c, val);
+            csr_matrix_set(A, r, c, val);
         }
     }
-
-    return mat;
+    
+    return A;
 }
 
-void csr_matrix_print(CSRMatrix_t *mat, char *title) {
-    printf("%s: %dx%d, nnz=%d\n", title, mat->rows, mat->cols, mat->nnz);
+// Check if matrix is small
+int is_small_matrix(CSRMatrix_t *A) {
+    if (A->rows > MAX_SMALL_DIM || A->cols > MAX_SMALL_DIM) return 0;
+    
+    for (int i = 0; i < A->nnz; i++) {
+        if (A->vals[i] < 0 || A->vals[i] > MAX_SMALL_VAL) return 0;
+    }
+    return 1;
+}
 
-    // Print non-zero elements in coordinate format
-    for (int r = 0; r < mat->rows; r++) {
-        int start = mat->rptr[r];
-        int end = mat->rptr[r + 1];
-        for (int i = start; i < end; i++) {
-            printf("(%d,%d)=%d\n", r, mat->cidx[i], mat->vals[i]);
+// Print matrix
+void csr_matrix_print(CSRMatrix_t *A, char *title) {
+    printf("%s: %dx%d, nnz=%d\n", title, A->rows, A->cols, A->nnz);
+    
+    if (is_small_matrix(A)) {
+        // Print small matrix as grid
+        for (int r = 0; r < A->rows; r++) {
+            printf("[");
+            for (int c = 0; c < A->cols; c++) {
+                int val = csr_matrix_get(A, r, c);
+                printf("%c", val == 0 ? ' ' : '0' + val);
+            }
+            printf(" ]\n");
+        }
+    } else {
+        // Print large matrix as non-zero elements
+        for (int r = 0; r < A->rows; r++) {
+            for (int i = A->rptr[r]; i < A->rptr[r + 1]; i++) {
+                printf("(%d,%d)=%d\n", r, A->cidx[i], A->vals[i]);
+            }
         }
     }
 }
 
-CSRMatrix_t* csr_matrix_copy(CSRMatrix_t *mat) {
-    CSRMatrix_t *copy = csr_matrix_create(mat->rows, mat->cols);
-    for (int r = 0; r < mat->rows; r++) {
-        int start = mat->rptr[r];
-        int end = mat->rptr[r + 1];
-        for (int i = start; i < end; i++) {
-            csr_matrix_set(copy, r, mat->cidx[i], mat->vals[i]);
-        }
+// Copy matrix
+CSRMatrix_t* csr_matrix_copy(CSRMatrix_t *A) {
+    CSRMatrix_t *copy = csr_matrix_create(A->rows, A->cols);
+    
+    // Allocate memory for values and column indices
+    if (A->nnz > 0) {
+        copy->cap = A->cap;
+        copy->vals = (int*)malloc(sizeof(int) * copy->cap);
+        copy->cidx = (int*)malloc(sizeof(int) * copy->cap);
+        assert(copy->vals != NULL && copy->cidx != NULL);
+        
+        // Copy values and column indices
+        memcpy(copy->vals, A->vals, sizeof(int) * A->nnz);
+        memcpy(copy->cidx, A->cidx, sizeof(int) * A->nnz);
+        copy->nnz = A->nnz;
     }
+    
+    // Copy row pointers
+    memcpy(copy->rptr, A->rptr, sizeof(int) * (A->rows + 1));
+    
     return copy;
 }
 
-void resize_if_needed(CSRMatrix_t *mat) {
-    if (mat->nnz >= mat->cap) {
-        if (mat->cap == 0) {
-            mat->cap = 1;
-        } else {
-            mat->cap *= GROWTH_FACTOR;
-        }
-        mat->vals = (int*)realloc(mat->vals, sizeof(int) * mat->cap);
-        mat->cidx = (int*)realloc(mat->cidx, sizeof(int) * mat->cap);
-        assert(mat->vals != NULL && mat->cidx != NULL);
+/* Operations implementation -------------------------------------------------*/
+
+void op_set(CSRMatrix_t *A, int r, int c, int val) {
+    csr_matrix_set(A, r, c, val);
+}
+
+void op_swap(CSRMatrix_t *A, int r1, int c1, int r2, int c2) {
+    int val1 = csr_matrix_get(A, r1, c1);
+    int val2 = csr_matrix_get(A, r2, c2);
+    csr_matrix_set(A, r1, c1, val2);
+    csr_matrix_set(A, r2, c2, val1);
+}
+
+void op_multiply(CSRMatrix_t *A, int val) {
+    for (int i = 0; i < A->nnz; i++) {
+        A->vals[i] *= val;
     }
 }
 
-void op_set(CSRMatrix_t *mat, int r, int c, int val) {
-    csr_matrix_set(mat, r, c, val);
-}
-
-void op_swap(CSRMatrix_t *mat, int r1, int c1, int r2, int c2) {
-    int val1 = csr_matrix_get(mat, r1, c1);
-    int val2 = csr_matrix_get(mat, r2, c2);
-    csr_matrix_set(mat, r1, c1, val2);
-    csr_matrix_set(mat, r2, c2, val1);
-}
-
-void op_multiply(CSRMatrix_t *mat, int val) {
-    for (int i = 0; i < mat->nnz; i++) {
-        mat->vals[i] *= val;
-    }
-}
-
-void op_add(CSRMatrix_t *mat, int val) {
+void op_add(CSRMatrix_t *A, int val) {
     int i = 0;
-    while (i < mat->nnz) {
-        mat->vals[i] += val;
-        if (mat->vals[i] == 0) {
-            // Find which row this element belongs to
-            int row = 0;
-            while (mat->rptr[row + 1] <= i) {
-                row++;
+    while (i < A->nnz) {
+        A->vals[i] += val;
+        if (A->vals[i] == 0) {
+            // Remove element that became zero
+            int r = 0;
+            while (r < A->rows && A->rptr[r + 1] <= i) r++;
+            
+            for (int j = i; j < A->nnz - 1; j++) {
+                A->vals[j] = A->vals[j + 1];
+                A->cidx[j] = A->cidx[j + 1];
             }
-            csr_matrix_set(mat, row, mat->cidx[i], 0);
+            A->nnz--;
+            
+            for (int j = r + 1; j <= A->rows; j++) {
+                A->rptr[j]--;
+            }
         } else {
             i++;
         }
     }
 }
 
-void op_copy_row(CSRMatrix_t *mat, int r1, int r2) {
-    // Clear target row first
-    int start2 = mat->rptr[r2];
-    int end2 = mat->rptr[r2 + 1];
-    int count2 = end2 - start2;
-    
-    // Remove elements from target row
-    for (int i = 0; i < count2; i++) {
-        csr_matrix_set(mat, r2, mat->cidx[start2], 0);
+void op_copy_row(CSRMatrix_t *A, int r1, int r2) {
+    // Clear destination row
+    for (int c = 0; c < A->cols; c++) {
+        csr_matrix_set(A, r2, c, 0);
     }
     
-    // Copy elements from source row
-    int start1 = mat->rptr[r1];
-    int end1 = mat->rptr[r1 + 1];
-    for (int i = start1; i < end1; i++) {
-        csr_matrix_set(mat, r2, mat->cidx[i], mat->vals[i]);
+    // Copy from source row
+    for (int c = 0; c < A->cols; c++) {
+        int val = csr_matrix_get(A, r1, c);
+        if (val != 0) {
+            csr_matrix_set(A, r2, c, val);
+        }
     }
 }
 
-void op_copy_col(CSRMatrix_t *mat, int c1, int c2) {
-    // Clear target column first
-    for (int r = 0; r < mat->rows; r++) {
-        csr_matrix_set(mat, r, c2, 0);
+void op_copy_col(CSRMatrix_t *A, int c1, int c2) {
+    // Clear destination column
+    for (int r = 0; r < A->rows; r++) {
+        csr_matrix_set(A, r, c2, 0);
     }
     
-    // Copy elements from source column
-    for (int r = 0; r < mat->rows; r++) {
-        int start = mat->rptr[r];
-        int end = mat->rptr[r + 1];
-        for (int i = start; i < end; i++) {
-            if (mat->cidx[i] == c1) {
-                csr_matrix_set(mat, r, c2, mat->vals[i]);
+    // Copy from source column
+    for (int r = 0; r < A->rows; r++) {
+        int val = csr_matrix_get(A, r, c1);
+        if (val != 0) {
+            csr_matrix_set(A, r, c2, val);
+        }
+    }
+}
+
+void op_swap_row(CSRMatrix_t *A, int r1, int r2) {
+    if (r1 == r2) return;
+    
+    // Create temporary copies of both rows
+    CSRMatrix_t *temp = csr_matrix_create(1, A->cols);
+    for (int c = 0; c < A->cols; c++) {
+        csr_matrix_set(temp, 0, c, csr_matrix_get(A, r1, c));
+    }
+    
+    // Copy row r2 to row r1
+    op_copy_row(A, r2, r1);
+    
+    // Copy temporary row to row r2
+    for (int c = 0; c < A->cols; c++) {
+        csr_matrix_set(A, r2, c, csr_matrix_get(temp, 0, c));
+    }
+    
+    csr_matrix_free(temp);
+}
+
+void op_swap_col(CSRMatrix_t *A, int c1, int c2) {
+    if (c1 == c2) return;
+    
+    // Swap column indices in all rows
+    for (int r = 0; r < A->rows; r++) {
+        for (int i = A->rptr[r]; i < A->rptr[r + 1]; i++) {
+            if (A->cidx[i] == c1) {
+                A->cidx[i] = c2;
+            } else if (A->cidx[i] == c2) {
+                A->cidx[i] = c1;
             }
         }
     }
 }
-
-void op_swap_row(CSRMatrix_t *mat, int r1, int r2) {
-    // Swap row pointers
-    int temp_start1 = mat->rptr[r1];
-    int temp_end1 = mat->rptr[r1 + 1];
-    int temp_start2 = mat->rptr[r2];
-    int temp_end2 = mat->rptr[r2 + 1];
-    
-    // Adjust row pointers
-    mat->rptr[r1] = temp_start2;
-    mat->rptr[r1 + 1] = temp_end2;
-    mat->rptr[r2] = temp_start1;
-    mat->rptr[r2 + 1] = temp_end1;
-}
-
-void op_swap_col(CSRMatrix_t *mat, int c1, int c2) {
-    for (int i = 0; i < mat->nnz; i++) {
-        if (mat->cidx[i] == c1) {
-            mat->cidx[i] = c2;
-        } else if (mat->cidx[i] == c2) {
-            mat->cidx[i] = c1;
-        }
-    }
-}
+//algorithms are fun!
