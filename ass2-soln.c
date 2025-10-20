@@ -89,66 +89,57 @@ void op_copy_row(CSRMatrix_t*, int, int);
 void op_copy_col(CSRMatrix_t*, int, int);
 void op_swap_row(CSRMatrix_t*, int, int);
 void op_swap_col(CSRMatrix_t*, int, int);
+void matrix_sort(CSRMatrix_t *mat);
+
+// Solution handling function
+void print_solution_and_cleanup(CSRMatrix_t*, CSRMatrix_t*, CSRMatrix_t*, int);
+void cleanup_matrices(CSRMatrix_t*, CSRMatrix_t*, CSRMatrix_t*);
 
 /* WHERE IT ALL HAPPENS ------------------------------------------------------*/
 int main(void) {
     int stage = 0, rows, cols;
     char line[MAX_LINE_LEN];
-    
     // Stage 0 initialization
     printf(SDELIM, stage++);                      // print Stage 0 header
-    
     // Read matrix dimensions
     fgets(line, MAX_LINE_LEN, stdin);
     assert(sscanf(line, MTXDIM, &rows, &cols) == 2);
-    
     // Create initial and target matrices
     CSRMatrix_t* initial = csr_matrix_read(rows, cols);
     CSRMatrix_t* target = csr_matrix_read(rows, cols);
     CSRMatrix_t* current = csr_matrix_copy(initial);
-    
     // Print initial and target matrices
     csr_matrix_print(initial, "Initial matrix");
     printf("%s\n", DELIMITER);
     csr_matrix_print(target, "Target matrix");
-    
     // Check if already solved
     if (csr_matrix_equals(current, target)) {
-        printf("%s\n", DELIMITER);
-        printf("TA-DAA!!! SOLVED IN 0 STEP(S)!\n");
-        printf(THEEND);
-        csr_matrix_free(initial);
-        csr_matrix_free(target);
-        csr_matrix_free(current);
+        print_solution_and_cleanup(initial, target, current, 0);
         return EXIT_SUCCESS;
     }
-    
     int step_count = 0;
     int stage1_printed = 0;
-    
+    int stage2_printed = 0;
     // Process operations
     while (fgets(line, MAX_LINE_LEN, stdin)) {
         // Remove newline and skip empty lines
         line[strcspn(line, "\n")] = 0;
         if (strlen(line) == 0) continue;
-        
         char op_type = line[0];
-        
         // Check for stage 2 operations
-        int is_stage2_op = (op_type == 'r' || op_type == 'c' ||
-                           op_type == 'R' || op_type == 'C');
-        
+        int is_stage2_op = (op_type == 'r' || op_type == 'c' || op_type == 'R' 
+                         || op_type == 'C');
         // Print stage headers when needed
-        if (is_stage2_op && stage == 1) {
-            printf(SDELIM, stage++);  // Print Stage 2 header
-        } else if (!stage1_printed && stage == 1) {
+        if (!stage1_printed && stage == 1) {
             printf(SDELIM, stage++);  // Print Stage 1 header
             stage1_printed = 1;
         }
-        
+        if (is_stage2_op && !stage2_printed) {
+            printf(SDELIM, stage++);  // Print Stage 2 header
+            stage2_printed = 1;
+        }
         // Print instruction
         printf("INSTRUCTION %s\n", line);
-        
         // Parse and execute operation
         if (op_type == 's') {
             int r, c, val;
@@ -185,31 +176,104 @@ int main(void) {
         } else {
             break;
         }
-        
         step_count++;
-        
+        // sort
+        matrix_sort(current);
         // Print current and target matrices
         csr_matrix_print(current, "Current matrix");
         csr_matrix_print(target, "Target matrix");
-        
         // Check if solved
         if (csr_matrix_equals(current, target)) {
-            printf("%s\n", DELIMITER);
-            printf("TA-DAA!!! SOLVED IN %d STEP(S)!\n", step_count);
-            printf(THEEND);
-            csr_matrix_free(initial);
-            csr_matrix_free(target);
-            csr_matrix_free(current);
+            print_solution_and_cleanup(initial, target, current, step_count);
             return EXIT_SUCCESS;
         }
     }
-    
     // No solution found
     printf(THEEND);
-    csr_matrix_free(initial);
-    csr_matrix_free(target);
-    csr_matrix_free(current);
+    cleanup_matrices(initial, target, current);
     return EXIT_SUCCESS;
+}
+
+void matrix_sort(CSRMatrix_t *mat) {
+    if (mat->nnz <= 1) {
+        return;
+    }
+
+    // 提取所有非零元素的 (row, col, val)
+    int *rows_array = malloc(sizeof(int) * mat->nnz);
+    int *cols_array = malloc(sizeof(int) * mat->nnz);
+    int *vals_array = malloc(sizeof(int) * mat->nnz);
+    assert(rows_array && cols_array && vals_array);
+
+    // 从 CSR 格式提取数据
+    int idx = 0;
+    for (int r = 0; r < mat->rows; r++) {
+        for (int i = mat->rptr[r]; i < mat->rptr[r + 1]; i++) {
+            rows_array[idx] = r;
+            cols_array[idx] = mat->cidx[i];
+            vals_array[idx] = mat->vals[i];
+            idx++;
+        }
+    }
+
+    // 冒泡排序 - 按 row-major order
+    for (int i = 0; i < mat->nnz - 1; i++) {
+        for (int j = i + 1; j < mat->nnz; j++) {
+            int swap_needed = 0;
+
+            // 先比较行
+            if (rows_array[i] > rows_array[j]) {
+                swap_needed = 1;
+            }
+            // 行相同则比较列
+            else if (rows_array[i] == rows_array[j] && cols_array[i] > cols_array[j]) {
+                swap_needed = 1;
+            }
+
+            if (swap_needed) {
+                // 交换三个数组的元素
+                int temp;
+
+                temp = rows_array[i];
+                rows_array[i] = rows_array[j];
+                rows_array[j] = temp;
+
+                temp = cols_array[i];
+                cols_array[i] = cols_array[j];
+                cols_array[j] = temp;
+
+                temp = vals_array[i];
+                vals_array[i] = vals_array[j];
+                vals_array[j] = temp;
+            }
+        }
+    }
+
+    // 将排序后的数据写回 CSR 格式
+    // 重建 rptr, cidx, vals
+    for (int i = 0; i <= mat->rows; i++) {
+        mat->rptr[i] = 0;
+    }
+
+    // 重新构建 CSR 结构
+    idx = 0;
+    for (int r = 0; r < mat->rows; r++) {
+        mat->rptr[r] = idx;
+        // 找出属于第 r 行的所有元素
+        for (int i = 0; i < mat->nnz; i++) {
+            if (rows_array[i] == r) {
+                mat->cidx[idx] = cols_array[i];
+                mat->vals[idx] = vals_array[i];
+                idx++;
+            }
+        }
+    }
+    mat->rptr[mat->rows] = mat->nnz;
+
+    // 释放临时内存
+    free(rows_array);
+    free(cols_array);
+    free(vals_array);
 }
 
 /* CSR matrix implementation -------------------------------------------------*/
@@ -315,7 +379,7 @@ void csr_matrix_set(CSRMatrix_t *A, int r, int c, int val) {
     }
 }
 
-// Check if two matrices are equal (按图片要求实现)
+// Check if two matrices are equal 
 int csr_matrix_equals(CSRMatrix_t *A, CSRMatrix_t *B) {
     if (A->rows != B->rows || A->cols != B->cols) {
         return 0;
@@ -399,7 +463,7 @@ void csr_matrix_print(CSRMatrix_t *A, char *title) {
                 int val = csr_matrix_get(A, r, c);
                 printf("%c", val == 0 ? ' ' : '0' + val);
             }
-            printf(" ]\n");
+            printf("]\n");
         }
     } else {
         // Print large matrix as non-zero elements
@@ -541,4 +605,23 @@ void op_swap_col(CSRMatrix_t *A, int c1, int c2) {
         }
     }
 }
-//algorithms are fun!
+
+// Print solution message and cleanup matrices
+void print_solution_and_cleanup(CSRMatrix_t* initial, CSRMatrix_t* target, 
+                                CSRMatrix_t* current, int step_count) {
+    printf("%s\n", DELIMITER);
+    printf("TA-DAA!!! SOLVED IN %d STEP(S)!\n", step_count);
+    printf(THEEND);
+    csr_matrix_free(initial);
+    csr_matrix_free(target);
+    csr_matrix_free(current);
+}
+
+// Cleanup matrices without printing solution message
+void cleanup_matrices(CSRMatrix_t* initial, CSRMatrix_t* target, 
+                      CSRMatrix_t* current) {
+    csr_matrix_free(initial);
+    csr_matrix_free(target);
+    csr_matrix_free(current);
+}
+//algorithms are fun！
