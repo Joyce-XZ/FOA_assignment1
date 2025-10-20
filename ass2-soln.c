@@ -127,8 +127,8 @@ int main(void) {
         if (strlen(line) == 0) continue;
         char op_type = line[0];
         // Check for stage 2 operations
-        int is_stage2_op = (op_type == 'r' || op_type == 'c' || op_type == 'R' 
-                         || op_type == 'C');
+        int is_stage2_op = (op_type == 'r' || op_type == 'c' 
+                         || op_type == 'R' || op_type == 'C');
         // Print stage headers when needed
         if (!stage1_printed && stage == 1) {
             printf(SDELIM, stage++);  // Print Stage 1 header
