@@ -100,7 +100,7 @@ int main(void) {
     int stage = 0, rows, cols;
     char line[MAX_LINE_LEN];
     // Stage 0 initialization
-    printf(SDELIM, stage++);                      // print Stage 0 header
+    printf(SDELIM, stage++);    // print Stage 0 header
     // Read matrix dimensions
     fgets(line, MAX_LINE_LEN, stdin);
     assert(sscanf(line, MTXDIM, &rows, &cols) == 2);
@@ -123,7 +123,7 @@ int main(void) {
     // Process operations
     while (fgets(line, MAX_LINE_LEN, stdin)) {
         // Remove newline and skip empty lines
-        line[strcspn(line, "\n")] = 0;
+        line[strcspn(line, "\n")] = 0;  
         if (strlen(line) == 0) continue;
         char op_type = line[0];
         // Check for stage 2 operations
@@ -199,13 +199,13 @@ void matrix_sort(CSRMatrix_t *mat) {
         return;
     }
 
-    // 提取所有非零元素的 (row, col, val)
+    // Extract all non-zero elements as (row, col, val)
     int *rows_array = malloc(sizeof(int) * mat->nnz);
     int *cols_array = malloc(sizeof(int) * mat->nnz);
     int *vals_array = malloc(sizeof(int) * mat->nnz);
     assert(rows_array && cols_array && vals_array);
 
-    // 从 CSR 格式提取数据
+    // Extract data from CSR format
     int idx = 0;
     for (int r = 0; r < mat->rows; r++) {
         for (int i = mat->rptr[r]; i < mat->rptr[r + 1]; i++) {
@@ -216,22 +216,23 @@ void matrix_sort(CSRMatrix_t *mat) {
         }
     }
 
-    // 冒泡排序 - 按 row-major order
+    // Bubble sort in row-major order
     for (int i = 0; i < mat->nnz - 1; i++) {
         for (int j = i + 1; j < mat->nnz; j++) {
             int swap_needed = 0;
 
-            // 先比较行
+            // First compare rows
             if (rows_array[i] > rows_array[j]) {
                 swap_needed = 1;
             }
-            // 行相同则比较列
-            else if (rows_array[i] == rows_array[j] && cols_array[i] > cols_array[j]) {
+            // If rows are equal, compare columns
+            else if (rows_array[i] == rows_array[j] && 
+                     cols_array[i] > cols_array[j]) {
                 swap_needed = 1;
             }
 
             if (swap_needed) {
-                // 交换三个数组的元素
+                // Swap elements across the three arrays
                 int temp;
 
                 temp = rows_array[i];
@@ -249,17 +250,17 @@ void matrix_sort(CSRMatrix_t *mat) {
         }
     }
 
-    // 将排序后的数据写回 CSR 格式
-    // 重建 rptr, cidx, vals
+    // Write the sorted data back to CSR format
+    // Rebuild rptr, cidx, vals
     for (int i = 0; i <= mat->rows; i++) {
         mat->rptr[i] = 0;
     }
 
-    // 重新构建 CSR 结构
+    // Reconstruct CSR structure
     idx = 0;
     for (int r = 0; r < mat->rows; r++) {
         mat->rptr[r] = idx;
-        // 找出属于第 r 行的所有元素
+        // Collect all elements belonging to row r
         for (int i = 0; i < mat->nnz; i++) {
             if (rows_array[i] == r) {
                 mat->cidx[idx] = cols_array[i];
@@ -270,7 +271,7 @@ void matrix_sort(CSRMatrix_t *mat) {
     }
     mat->rptr[mat->rows] = mat->nnz;
 
-    // 释放临时内存
+    // Free temporary arrays
     free(rows_array);
     free(cols_array);
     free(vals_array);
@@ -624,4 +625,6 @@ void cleanup_matrices(CSRMatrix_t* initial, CSRMatrix_t* target,
     csr_matrix_free(target);
     csr_matrix_free(current);
 }
+
 //algorithms are fun！
+/* THE END -------------------------------------------------------------------*/
